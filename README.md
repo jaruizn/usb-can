@@ -20,7 +20,7 @@ A modern, high-performance Python application for monitoring CAN bus traffic usi
 
 ## Hardware Support
 
-Designed to work with USB-CAN adapters following the protocol used in typical `canusb.c` implementations.
+Designed to work with USB-CAN adapters following the protocol used in typical `canusb.c` implementations. This software is specifically compatible with the device shown in the header image.
 - **Default Serial Settings**: 2,000,000 baud, 2 stop bits.
 - **Supported CAN Speeds**: 5k to 1M bit/s.
 
