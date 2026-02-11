@@ -2,7 +2,7 @@
 
 A modern, high-performance Python application for monitoring CAN bus traffic using a USB-CAN adapter. This tool provides a rich graphical interface with real-time data visualization, advanced multi-filtering capabilities, and export features.
 
-![CANUSB Monitor for Linux UI](https://img.icons8.com/clouds/100/000000/speedometer.png) <!-- Placeholder icon -->
+![CANUSB Monitoring Hardware](USB-CAN.jpg)
 
 ## Features
 
