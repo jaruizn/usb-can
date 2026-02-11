@@ -1,13 +1,14 @@
 import sys
 import argparse
 import time
+import json
 from datetime import datetime
 import serial.tools.list_ports
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                              QTableWidget, QTableWidgetItem, QLineEdit, QPushButton, 
-                             QLabel, QComboBox, QHeaderView, QStatusBar, QListWidget, QListWidgetItem, QMenu, QFileDialog)
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QObject
-from PyQt6.QtGui import QFont, QColor, QPalette
+                             QLabel, QComboBox, QHeaderView, QStatusBar, QListWidget, QListWidgetItem, 
+                             QMenu, QFileDialog, QMenuBar)
+from PyQt6.QtGui import QFont, QColor, QPalette, QAction, QKeySequence
 from canusb_backend import CANUSBBackend, CANFrame
 
 class Filter:
@@ -51,6 +52,7 @@ class CANMonitor(QMainWindow):
         # Connect signal for thread-safe UI updates
         self.frame_received_signal.connect(self._do_add_frame)
         
+        self.init_menu()
         self.init_ui()
         self.apply_dark_theme()
         self.refresh_ports()
@@ -63,6 +65,21 @@ class CANMonitor(QMainWindow):
             else:
                 self.port_combo.insertItem(0, self.port)
                 self.port_combo.setCurrentIndex(0)
+
+    def init_menu(self):
+        """Initialize the top menu bar."""
+        menubar = self.menuBar()
+        project_menu = menubar.addMenu("Project")
+
+        open_action = QAction("Open", self)
+        open_action.setShortcut(QKeySequence.StandardKey.Open)
+        open_action.triggered.connect(self.load_project)
+        project_menu.addAction(open_action)
+
+        save_action = QAction("Save", self)
+        save_action.setShortcut(QKeySequence.StandardKey.Save)
+        save_action.triggered.connect(self.save_project)
+        project_menu.addAction(save_action)
 
     def init_ui(self):
         """Set up all UI widgets and layouts."""
@@ -127,6 +144,8 @@ class CANMonitor(QMainWindow):
         
         self.table.setAlternatingRowColors(True)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.table.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
+        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectItems)
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.show_context_menu)
         self.table.setStyleSheet("QTableWidget::item { color: white; padding: 1px; }")
@@ -387,22 +406,35 @@ class CANMonitor(QMainWindow):
             self.status_bar.showMessage(f"Export failed: {e}")
 
     def show_context_menu(self, pos):
-        """Display context menu on right-click to copy cell value to filter."""
-        item = self.table.itemAt(pos)
-        if not item:
-            return
-            
-        col = item.column()
-        # Filtering is supported for ID and Data columns
-        if col not in [1, 3, 4]:
-            return
+        """Display context menu on right-click to copy cell value or add to filter."""
+        selected_items = self.table.selectedItems()
+        if not selected_items:
+            # If nothing selected, try to get item at position
+            item = self.table.itemAt(pos)
+            if not item:
+                return
+            selected_items = [item]
             
         menu = QMenu()
-        add_filter_action = menu.addAction("Add to filter")
+        copy_action = menu.addAction("Copy")
+        
+        add_filter_action = None
+        # Only show "Add to filter" if exactly one cell is selected
+        if len(selected_items) == 1:
+            item = selected_items[0]
+            col = item.column()
+            if col in [1, 3, 4]: # ID or Data columns
+                menu.addSeparator()
+                add_filter_action = menu.addAction("Add to filter")
+        
         action = menu.exec(self.table.viewport().mapToGlobal(pos))
         
-        if action == add_filter_action:
+        if action == copy_action:
+            self.copy_to_clipboard(selected_items)
+        elif action == add_filter_action:
+            item = selected_items[0]
             text = item.text()
+            col = item.column()
             if col == 1: # ID column
                 self.filter_type.setCurrentText("ID")
                 clean_text = text.replace("0x", "")
@@ -410,6 +442,74 @@ class CANMonitor(QMainWindow):
             elif col in [3, 4]: # Data columns
                 self.filter_type.setCurrentText("Data")
                 self.filter_value.setText(text)
+
+    def copy_to_clipboard(self, items):
+        """Copy selected items to clipboard in a tabular format."""
+        if not items:
+            return
+            
+        # Sort items by row and then column
+        items.sort(key=lambda x: (x.row(), x.column()))
+        
+        rows = {}
+        for item in items:
+            r = item.row()
+            if r not in rows:
+                rows[r] = []
+            rows[r].append(item.text())
+            
+        text = "\n".join(["\t".join(r_data) for r_data in rows.values()])
+        QApplication.clipboard().setText(text)
+        self.status_bar.showMessage(f"Copied {len(items)} items to clipboard")
+
+    def save_project(self):
+        """Save filter configurations to a JSON file."""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Save Project", "filters.json", "Project Files (*.json);;All Files (*)"
+        )
+        if not file_path:
+            return
+            
+        project_data = {
+            "filters": [
+                {"type": f.ftype, "value": f.value, "logic": f.logic}
+                for f in self.filters
+            ]
+        }
+        
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(project_data, f, indent=4)
+            self.status_bar.showMessage(f"Project saved to {file_path}")
+        except Exception as e:
+            self.status_bar.showMessage(f"Save failed: {e}")
+
+    def load_project(self):
+        """Load filter configurations from a JSON file."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Open Project", "", "Project Files (*.json);;All Files (*)"
+        )
+        if not file_path:
+            return
+            
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                project_data = json.load(f)
+            
+            # Clear current filters
+            self.filters = []
+            self.filter_list.clear()
+            
+            # Load new filters
+            for f_data in project_data.get("filters", []):
+                new_filter = Filter(f_data["type"], f_data["value"], f_data["logic"])
+                self.filters.append(new_filter)
+                self.filter_list.addItem(str(new_filter))
+            
+            self.apply_filters_to_all()
+            self.status_bar.showMessage(f"Project loaded from {file_path}")
+        except Exception as e:
+            self.status_bar.showMessage(f"Load failed: {e}")
 
 def main():
     """Main Entry Point: parse arguments and launch GUI."""

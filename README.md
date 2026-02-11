@@ -11,9 +11,12 @@ A modern, high-performance Python application for monitoring CAN bus traffic usi
   - Add multiple concurrent filters.
   - Support for **Include** (whitelist) and **Exclude** (blacklist) logic.
   - Filter by **CAN ID** or **Data Pattern** (Hex).
+- **Project Management**: Save and load your filter configurations (JSON format) via the **Project** menu.
+- **Enhanced Table Interaction**:
+  - Support for **Multi-selection** (Shift/Ctrl + Click).
+  - **Clipboard Support**: Copy selected cells/rows to the clipboard via the right-click menu.
+- **Smart Context Menu**: Right-click to copy or quickly add a single value to filters.
 - **Dual Data View**: View payload data in both **Hexadecimal** and **Decimal** formats simultaneously.
-- **Smart Scroll**: Automatically follows incoming data, but stays locked when you scroll up for analysis.
-- **Context Menu**: Right-click on any ID or Data cell to quickly add it to your filters.
 - **Export**: Save your filtered data to `.txt` (tabular) or `.csv` formats.
 - **Dark Theme**: Premium dark-mode interface for comfortable long-term use.
 - **CLI Support**: Launch with pre-configured port and speed settings.
