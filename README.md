@@ -28,8 +28,8 @@ Designed to work with USB-CAN adapters following the protocol used in typical `c
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/canusb-monitor.git
-   cd canusb-monitor
+   git clone https://github.com/jaruizn/usb-can.git
+   cd usb-can
    ```
 
 2. **Create a virtual environment**:
