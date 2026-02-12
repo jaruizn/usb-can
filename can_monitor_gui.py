@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                              QTableWidget, QTableWidgetItem, QLineEdit, QPushButton, 
                              QLabel, QComboBox, QHeaderView, QStatusBar, QListWidget, QListWidgetItem, 
                              QMenu, QFileDialog, QMenuBar)
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QObject
 from PyQt6.QtGui import QFont, QColor, QPalette, QAction, QKeySequence
 from canusb_backend import CANUSBBackend, CANFrame
 
@@ -46,7 +47,7 @@ class CANMonitor(QMainWindow):
         self.can_speed = can_speed
         self.filters = []
         
-        self.setWindowTitle("CANUSB Monitor for Linux - Advanced Filtering")
+        self.setWindowTitle("CANUSB Monitor for Linux")
         self.resize(1100, 600)
         
         # Connect signal for thread-safe UI updates
@@ -96,7 +97,7 @@ class CANMonitor(QMainWindow):
         ctrl_layout = QHBoxLayout()
         ctrl_layout.addWidget(QLabel("Port:"))
         self.port_combo = QComboBox()
-        self.port_combo.setEditable(True)
+        self.port_combo.setEditable(False)
         self.port_combo.setMinimumWidth(200)
         ctrl_layout.addWidget(self.port_combo)
         
@@ -223,6 +224,34 @@ class CANMonitor(QMainWindow):
             QComboBox { background-color: #2b2b2b; color: #ffffff; border: 1px solid #444; padding: 2px; }
             QStatusBar { background-color: #1e1e1e; color: #aaa; }
             QListWidget { background-color: #2b2b2b; color: white; border: 1px solid #444; }
+            
+            /* Menu Bar Styling */
+            QMenuBar {
+                background-color: #2d2d2d;
+                border-bottom: 1px solid #444;
+                padding: 2px;
+            }
+            QMenuBar::item {
+                background-color: transparent;
+                padding: 4px 10px;
+                border-radius: 4px;
+            }
+            QMenuBar::item:selected {
+                background-color: #444;
+            }
+            QMenu {
+                background-color: #2d2d2d;
+                border: 1px solid #444;
+                padding: 5px;
+            }
+            QMenu::item {
+                padding: 5px 20px;
+                border-radius: 3px;
+            }
+            QMenu::item:selected {
+                background-color: #3498db;
+                color: white;
+            }
         """)
 
     def add_filter(self):

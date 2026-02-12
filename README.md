@@ -4,6 +4,9 @@ A modern, high-performance Python application for monitoring CAN bus traffic usi
 
 ![CANUSB Monitoring Hardware](USB-CAN.jpg)
 
+![Application Screenshot](screen.png)
+
+
 ## Features
 
 - **Real-time Monitoring**: Stream CAN frames directly from your USB-CAN hardware.
