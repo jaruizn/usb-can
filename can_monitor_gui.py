@@ -103,6 +103,7 @@ class CANMonitor(QMainWindow):
         
         self.refresh_btn = QPushButton("Refresh")
         self.refresh_btn.clicked.connect(self.refresh_ports)
+        self.refresh_btn.setStyleSheet("font-weight: bold; padding: 5px 15px;")
         ctrl_layout.addWidget(self.refresh_btn)
         
         self.speed_combo = QComboBox()
@@ -120,11 +121,12 @@ class CANMonitor(QMainWindow):
         
         self.clear_btn = QPushButton("Clear")
         self.clear_btn.clicked.connect(self.clear_table)
+        self.clear_btn.setStyleSheet("font-weight: bold; padding: 5px 15px;")
         ctrl_layout.addWidget(self.clear_btn)
         
         self.export_btn = QPushButton("Export")
         self.export_btn.clicked.connect(self.export_data)
-        self.export_btn.setStyleSheet("background-color: #f39c12; color: white; font-weight: bold;")
+        self.export_btn.setStyleSheet("background-color: #f39c12; color: white; font-weight: bold; padding: 5px 15px;")
         ctrl_layout.addWidget(self.export_btn)
         
         left_layout.addLayout(ctrl_layout)
