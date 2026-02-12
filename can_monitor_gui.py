@@ -115,7 +115,7 @@ class CANMonitor(QMainWindow):
         
         self.start_btn = QPushButton("Open")
         self.start_btn.clicked.connect(self.toggle_monitoring)
-        self.start_btn.setStyleSheet("background-color: #2ecc71; color: white; font-weight: bold;")
+        self.start_btn.setStyleSheet("background-color: #2ecc71; color: white; font-weight: bold; padding: 5px 15px;")
         ctrl_layout.addWidget(self.start_btn)
         
         self.clear_btn = QPushButton("Clear")
