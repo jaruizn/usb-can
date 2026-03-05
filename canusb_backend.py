@@ -97,6 +97,7 @@ class CANUSBBackend:
         while len(self.buffer) > 0:
             # Each frame must start with 0xAA
             if self.buffer[0] != 0xAA:
+
                 self.buffer.pop(0)
                 continue
             
@@ -109,19 +110,28 @@ class CANUSBBackend:
                     self.buffer = self.buffer[20:]
                 else:
                     break
-            # 0x0C in high nibble of second byte indicates a standard data frame
-            elif (self.buffer[1] >> 4) == 0x0C:
+            # 0x0C (Standard) or 0x0E (Extended) in high nibble indicates a data frame
+            elif (self.buffer[1] >> 4) in (0x0C, 0x0E):
+                is_ext = bool(self.buffer[1] & 0x20)
                 dlc = self.buffer[1] & 0x0F
-                frame_len = dlc + 5 # 0xAA + CMD + ID_L + ID_H + DATA[DLC] + 0x55
+                id_len = 4 if is_ext else 2
+                frame_len = dlc + id_len + 3 # 0xAA + CMD + ID + DATA[DLC] + 0x55
+                
                 if len(self.buffer) >= frame_len:
                     frame_data = self.buffer[:frame_len]
                     if frame_data[-1] == 0x55: # Verify end byte
-                        is_ext = bool(frame_data[1] & 0x20)
-                        can_id = frame_data[2] | (frame_data[3] << 8)
+                        if is_ext:
+                            can_id = (frame_data[2] | (frame_data[3] << 8) | 
+                                     (frame_data[4] << 16) | (frame_data[5] << 24))
+                            data_start = 6
+                        else:
+                            can_id = frame_data[2] | (frame_data[3] << 8)
+                            data_start = 4
+                            
                         frame = CANFrame(
                             id=can_id,
                             dlc=dlc,
-                            data=bytes(frame_data[4:4+dlc]),
+                            data=bytes(frame_data[data_start:data_start+dlc]),
                             is_extended=is_ext,
                             timestamp=time.time()
                         )
@@ -131,6 +141,7 @@ class CANUSBBackend:
                     self.buffer = self.buffer[frame_len:]
                 else:
                     break
+
             else:
                 # Discard invalid start byte
                 self.buffer.pop(0)
